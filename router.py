@@ -40,7 +40,7 @@ class Router():
         self.password = password
         self.session = requests.Session()
         self.session.auth = (self.username, self.password)
-        self.sessionKey = None
+        self.session_key = None
 
 
     def scrape_page(self, url, params='', soup='n'):
@@ -73,10 +73,20 @@ class Router():
         '''
         r = self.scrape_page(url=self.gateway + 'wlmacflt.cmd')
 
-        if not self.sessionKey:
-            self.sessionKey = re.search('\d{5,13}', r.content.decode()).group()
+        if not self.session_key:
+            self.session_key = re.search('\d{5,13}', r.content.decode()).group()
 
-        return self.sessionKey
+        return self.session_key
+
+
+    def my_session(func):
+
+        def wrapper(self):
+
+            self.get_session_key()
+            func(self)
+
+        return wrapper
 
 
     def dhcpinfo(self):
@@ -131,6 +141,7 @@ class Router():
         return active_dev
 
     #TODO if already username defined, raise Error
+    @my_session
     def time_limit(self, username="User_1", mac="", days="Everyday", start="1", end="24"):
         '''
         Restricts user from using internet for limited time.
@@ -200,7 +211,7 @@ class Router():
         gen_params = lambda days: {
         'username': username,
         'days': days, 'start_time': start,
-        'end_time': end, 'sessionKey': self.get_session_key()
+        'end_time': end, 'sessionKey': self.session_key
         }
 
         start, end = convert_time(start_time=start, end_time=end)
@@ -223,6 +234,9 @@ class Router():
                         # Mon - Sunday, select the value from sunday and add it to the value preceding it.
                 else:
                     print("Specified day is not in week_days.")
+                    return 'Failed'
+
+        return 'Successful'
 
 
     def web_filter(self, url):
@@ -231,7 +245,7 @@ class Router():
         '''
         pass
 
-
+    @my_session
     def block(self, mac):
         '''
         Block device using Mac Address.
@@ -240,9 +254,10 @@ class Router():
         Example:
         >>> router.block('xx:xx:xx:xx:xx:xx')
         '''
-        self.session.get(self.gateway + "wlmacflt.cmd?action=add&rmLst={}&sessionKey={}".format(devmac, self.get_session_key()))
+        self.session.get(self.gateway + "wlmacflt.cmd?action=add&rmLst={}&sessionKey={}".format(devmac, self.session_key))
+        return 'Successful'
 
-
+    @my_session
     def unblock(self, mac):
         '''
         Unblock device using Mac Address.
@@ -251,11 +266,13 @@ class Router():
         Example:
         >>> router.unblock('xx:xx:xx:xx:xx:xx')
         '''
-        self.session.get(self.gateway + "wlmacflt.cmd?action=remove&rmLst={}&sessionKey={}".format(udevmac, self.get_session_key()))
+        self.session.get(self.gateway + "wlmacflt.cmd?action=remove&rmLst={}&sessionKey={}".format(udevmac, self.session_key))
+        return 'Successful'
 
-
+    @my_session
     def reboot(self):
         '''
         Reboots Router.
         '''
-        self.session.get(self.gateway + "rebootinfo.cgi?sessionKey={}".format(self.get_session_key()))
+        self.session.get(self.gateway + "rebootinfo.cgi?sessionKey={}".format(self.session_key))
+        return 'Successful'
