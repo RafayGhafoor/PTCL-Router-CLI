@@ -38,8 +38,6 @@ class Router():
         self.gateway = "http://" + gateway + '/'
         self.username = username
         self.password = password
-        self.dev_info = {}      # Devices info
-        self.active_dev = []    # Active Devices on Wi-Fi
         self.session = requests.Session()
         self.session.auth = (self.username, self.password)
         self.sessionKey = None
@@ -93,6 +91,7 @@ class Router():
         Return:
             self.dev_info (Dictionary object)
         '''
+        dev_info = {}
         soup = self.scrape_page(url=(self.gateway + "dhcpinfo.html"), soup='y')
         td = soup.findAll('td')
 
@@ -111,24 +110,25 @@ class Router():
                 # After mac_addresses, there are local ip and expire time for
                 # the devices connected
                 hostname = td[td.index(i) - 1].text
-                self.dev_info[hostname] = [i.text, td[td.index(i) + 1].text, td[td.index(i) + 2].text]
+                dev_info[hostname] = [i.text, td[td.index(i) + 1].text, td[td.index(i) + 2].text]
 
-        return self.dev_info
+        return dev_info
 
 
     def stationinfo(self):
         '''
         Gets information about the connected devices.
         '''
+        active_dev = []
         soup = self.scrape_page(url=self.gateway + "wlstationlist.cmd", soup='y')
 
         for i in soup.findAll('td'):
             searchstr = i.text.replace('&nbsp','').strip()
 
             if self.mac_pattern.search(searchstr):
-                self.active_dev.append(searchstr.lower())
+                active_dev.append(searchstr.lower())
 
-        return self.active_dev
+        return active_dev
 
     #TODO if already username defined, raise Error
     def time_limit(self, username="User_1", mac="", days="Everyday", start="1", end="24"):
