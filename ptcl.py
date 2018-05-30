@@ -13,7 +13,7 @@ def show_dhcpinfo():
     '''
     Shows DHCP information.
     '''
-    table_data = [[k] + v for k, v in papi.dhcpinfo().items()]
+    table_data = [[k] + v for k, v in papi.dhcp().items()]
     print(tabulate(table_data, tablefmt='fancy_grid', headers=["#", "HOSTNAME", "MAC", "LOCAL-IP", "EXPIRES"], showindex="always"))
 
 
@@ -22,7 +22,7 @@ def show_active_dev():
     Shows active devices (Mac Addresses) and their hostnames.
     '''
 
-    table_data = [[i] for i in papi.stationinfo()]
+    table_data = [[i] for i in papi.station()]
     print(tabulate(table_data, tablefmt='fancy_grid', headers=["#", "MAC-ADDRESSES"], showindex="always"))
 
 
