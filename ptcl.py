@@ -2,27 +2,26 @@ import argparse
 import sys
 import os
 
-import configobj
 from tabulate import tabulate
 
 from router import Router
+import configure
 
-papi = Router()
 
-def show_dhcpinfo():
+def show_dhcpinfo(rapi):
     '''
     Shows DHCP information.
     '''
-    table_data = [[k] + v for k, v in papi.dhcp().items()]
+    table_data = [[k] + v for k, v in rapi.dhcp().items()]
     print(tabulate(table_data, tablefmt='fancy_grid', headers=["#", "HOSTNAME", "MAC", "LOCAL-IP", "EXPIRES"], showindex="always"))
 
 
-def show_active_dev():
+def show_active_dev(rapi):
     '''
     Shows active devices (Mac Addresses) and their hostnames.
     '''
 
-    table_data = [[i] for i in papi.station()]
+    table_data = [[i] for i in rapi.station()]
     print(tabulate(table_data, tablefmt='fancy_grid', headers=["#", "MAC-ADDRESSES"], showindex="always"))
 
 
@@ -40,23 +39,28 @@ def main():
     parser.add_argument('-c', '--cli', help='Silent mode.', nargs='?', default='False')
     args = parser.parse_args()
 
+    if args.configure:
+        configure.process_config()
 
-    if args.active_devices:
-        # print "Calling Station info Function"
-        papi.stationinfo()
+    config_dict = configure.fetch_config().dict()
+    get_auth = lambda parameter: config_dict['Auth'][parameter] 
+    papi = Router(gateway=get_auth('gateway'), username=get_auth('username'), password=get_auth('password'))
 
-    elif args.restart:
+
+    if args.restart:
         # print "Calling restart Function"
         papi.reboot()
 
     elif args.show_dhcp:
         # print "Calling DHCP_info Function"
-        show_dhcpinfo()
+        show_dhcpinfo(papi)
 
     elif args.show_active == '.':
-        show_active_dev()
+        show_active_dev(papi)
 
     else:
         print("Invalid Argument")
 
-main()
+
+if __name__ == '__main__':
+    main()

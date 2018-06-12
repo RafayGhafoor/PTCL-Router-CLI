@@ -33,8 +33,6 @@ class Router():
             gateway, username, password
     All the arguments are strings.
     '''
-    mac_pattern = re.compile(u'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$')
-
     week_days = {
         "Mon": 1,
         "Tue": 2,
@@ -115,7 +113,7 @@ class Router():
 
         for i in td:
 
-            if self.mac_pattern.search(i.text):
+            if utils.mac_pattern.search(i.text):
                 '''
                 The HTML page contains hostnames and mac addresses right next
                 to each other in the form of table. We search in the tables list
@@ -142,7 +140,7 @@ class Router():
         for i in soup.findAll('td'):
             searchstr = i.text.replace('&nbsp','').strip()
 
-            if self.mac_pattern.search(searchstr):
+            if utils.mac_pattern.search(searchstr):
                 self.active_dev.append(searchstr.lower())
 
         return self.active_dev
@@ -198,11 +196,11 @@ class Router():
         return 'Successful'
 		
     
-    def web_filter(self, url):
-        '''
-        Block website temporarily/permanently (i.e Temporarily, when time is specified).
-        '''
-        return 'Successful'
+    # def web_filter(self, url):
+    #     '''
+    #     Block website temporarily/permanently (i.e Temporarily, when time is specified).
+    #     '''
+    #     return 'Successful'
 
 
     def block(self, mac):
@@ -235,4 +233,4 @@ class Router():
 
 
     def __repr__(self):
-        return self.gateway
+        return "Active at", self.gateway

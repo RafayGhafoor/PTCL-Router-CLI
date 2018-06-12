@@ -1,5 +1,8 @@
 import re
 
+mac_pattern = re.compile(u'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$')
+
+
 def validate_gateway(gateway):
     if not re.search("https?://", gateway) and not gateway.endswith('/'):
         return True
