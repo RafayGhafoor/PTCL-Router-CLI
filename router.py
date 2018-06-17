@@ -15,7 +15,7 @@ Usage Example:
 
 {'HOSTNAME': ['Mac', 'LocalIp', 'Expires']}
 
-{'my-computer': ['macxx', '192.168.10.1', '23 Hours, 59 Minutes']}
+{'my-computer': ['macxx', '192.168.1.1', '23 Hours, 59 Minutes']}
 '''
 import re
 
@@ -23,6 +23,7 @@ import requests
 import bs4
 
 import utils
+
 
 class Router():
     '''
@@ -58,7 +59,7 @@ class Router():
         self.active_dev = []    # Active Devices on Wi-Fi
         self.session = requests.Session()
         self.session.auth = (self.username, self.password)
-        self.sessionKey = None
+        self.token = None
 
 
     def scrape_page(self, url, params='', soup='n'):
@@ -83,17 +84,17 @@ class Router():
             raise Exception("Internet Connection Down.\nExiting...")
 
 
-    def get_session_key(self):
+    def get_token(self):
         '''
         Gets session key from the html page for interacting with forms which
         require session key for authentication.
         '''
         r = self.scrape_page(url=self.gateway + 'wlmacflt.cmd')
 
-        if not self.sessionKey:
-            self.sessionKey = re.search('\d{5,13}', r.content.decode()).group()
+        if not self.token:
+            self.token = re.search('\d{5,13}', r.content.decode()).group()
 
-        return self.sessionKey
+        return self.token
 
 
     def dhcp(self):
@@ -174,7 +175,7 @@ class Router():
         
         gen_params = lambda days: {
         'username': username, 'days': days, 'start_time': start,
-        'end_time': end, 'sessionKey': self.get_session_key()
+        'end_time': end, 'token': self.get_token()
         }
 
         start, end = utils.convert_time(start_time=start, end_time=end)
@@ -196,40 +197,43 @@ class Router():
         return 'Successful'
 		
     
-    # def web_filter(self, url):
-    #     '''
-    #     Block website temporarily/permanently (i.e Temporarily, when time is specified).
-    #     '''
-    #     return 'Successful'
-
-
-    def block(self, mac):
+    def web_filter(self, url):
         '''
-        Block device using Mac Address.
-        - mac: Device mac address to block.
+        Block website temporarily/permanently (i.e Temporarily, when time is specified).
+        '''
+        return 'Successful'
+
+
+    def mac_filter(self, *mac, type='add', page='wlmacflt.cmd'):
+        '''
+        Block/Unblock device using Mac Address.
+
+        @args:
+        
+        mac:  Devices mac address to block.
+        type: Mac Filter type, "add" for block and "rm" for unblock (remove) - defaults to block type.
+        page:  page name where the request is made. 
+
 
         Example:
         >>> router.block('xx:xx:xx:xx:xx:xx')
         '''
-        return self.session.get(self.gateway + "wlmacflt.cmd?action=add&rmLst={}&sessionKey={}".format(devmac, self.get_session_key())) 
-        
+        if type == 'add':
+            if len(mac) != 1:
+                raise Exception("Only one device can be blocked at a time.")
+            params = "?action={}&wlFltMacAddr={}&sessionKey={}".format(type, ','.join(mac), self.get_token())
 
-    def unblock(self, mac):
-        '''
-        Unblock device using Mac Address.
-        - mac: Device mac address to unblock.
+        else:
+            params = "?action={}&rmLst={}&sessionKey={}".format(type, ','.join(mac), self.get_token())
 
-        Example:
-        >>> router.unblock('xx:xx:xx:xx:xx:xx')
-        '''
-        return self.session.get(self.gateway + "wlmacflt.cmd?action=remove&rmLst={}&sessionKey={}".format(udevmac, self.get_session_key()))
+        return self.session.get(self.gateway + page + params) 
 
 
-    def reboot(self):
+    def reboot(self, page='rebootinfo.cgi'):
         '''
         Reboots Router.
         '''
-        return self.session.get(self.gateway + "rebootinfo.cgi?sessionKey={}".format(self.get_session_key()))
+        return self.session.get( self.gateway + page, params={ 'token': self.get_token() } )
 
 
     def __repr__(self):

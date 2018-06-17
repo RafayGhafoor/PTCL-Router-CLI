@@ -58,7 +58,7 @@ def add_alias(alias, mac, config=my_config(CONFIG_FP)):
     if not mac_pattern.search(mac):
         raise Exception("Invalid mac-address specified.")
     config.reload()
-    config['Alias'][alias] = mac
+    config['Alias'][mac] = alias
     config.write()
 
 
@@ -80,7 +80,7 @@ def add_multiple_alias(aliases, macs, config=my_config(CONFIG_FP), separator=','
     for alias, mac in zip(aliases, macs):
         if not mac_pattern.search(mac):
             raise Exception("Invalid mac-address specified.")
-        config['Alias'][alias] = mac
+        config['Alias'][mac] = alias
         
     config.write()
 

@@ -38,4 +38,4 @@ def convert_time(start_time="1", end_time="23:59"):
             # raise custom Exception
         start_time = (start_time[0] * 60) + start_time[1]
         end_time = (end_time[0] * 60) + end_time[1]
-        return (start_time, end_time)
+        return (start_time, end_time)  

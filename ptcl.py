@@ -16,13 +16,17 @@ def show_dhcpinfo(rapi):
     print(tabulate(table_data, tablefmt='fancy_grid', headers=["#", "HOSTNAME", "MAC", "LOCAL-IP", "EXPIRES"], showindex="always"))
 
 
-def show_active_dev(rapi):
+def show_active_dev(rapi, alias=None):
     '''
     Shows active devices (Mac Addresses) and their hostnames.
     '''
+    devices = rapi.station()
+    table_data = []
+    for mac, name in alias.items():
+        if mac.lower() in devices:
+            table_data.append( (name, mac) )
+    print(tabulate(table_data, tablefmt='fancy_grid', headers=["#", "Alias", "MAC-ADDRESSES"], showindex="always"))
 
-    table_data = [[i] for i in rapi.station()]
-    print(tabulate(table_data, tablefmt='fancy_grid', headers=["#", "MAC-ADDRESSES"], showindex="always"))
 
 
 def main():
@@ -56,7 +60,7 @@ def main():
         show_dhcpinfo(papi)
 
     elif args.show_active == '.':
-        show_active_dev(papi)
+        show_active_dev(papi, alias=config_dict['Alias'])
 
     else:
         print("Invalid Argument")
